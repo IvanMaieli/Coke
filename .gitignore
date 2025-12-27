@@ -1,0 +1,10 @@
+# Escludi cartelle di output della compilazione
+bin/
+obj/
+
+# Escludi i file di cattura dati
+*.pcap
+
+# Escludi file temporanei dell'editor (es. Vim)
+*.swp
+*~
