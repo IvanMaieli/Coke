@@ -1,86 +1,74 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <unistd.h> 
-#include <getopt.h>
+#include <pthread.h>
+#include <unistd.h>
+#include <signal.h>
 #include "../include/coke.h"
 
-// Colori ANSI per il terminale
-#define COLOR_CYAN  "\033[1;36m"
-#define COLOR_RESET "\033[0m"
+volatile sig_atomic_t is_sniffing = 0;
+coke_config_t config;
+pthread_t sniffer_thread;
 
-void print_banner() {
-    printf(COLOR_CYAN);
-    printf("  ❄️    C O C A   ❄️\n");
-    printf("  Network Analysis Tool\n");
-    printf("-------------------------\n");
-    printf("      \\  |  /      \n");
-    printf("    --   * --    \n");
-    printf("      /  |  \\      \n");
-    printf("-------------------------\n");
-    printf(COLOR_RESET);
-}
-
-void show_help() {
-    printf("Usage: sudo ./coke [OPTIONS]\n");
-    printf("Options:\n");
-    printf("  -o <file>   Set output pcap file (default: capture.pcap)\n");
-    printf("  -f <proto>  Filter protocol (tcp, udp, icmp)\n");
-    printf("  -a          Enable automation tasks\n");
-    printf("  -v          Verbose mode\n");
-    printf("  -h          Show this help message\n");
+void handle_sigint(int sig) {
+    (void)sig;
+    if (is_sniffing) {
+        printf("\n\033[1;31m[!] INTERRUPT RECEIVED. STOPPING SNIFFER...\033[0m\n");
+        is_sniffing = 0;
+    } else {
+        printf("\n\nStay cold. ❄️\n");
+        exit(0);
+    }
 }
 
 int main(int argc, char *argv[]) {
-    // 1. Configurazione di Default
-    coke_config_t config;
     config.output_file = "capture.pcap";
     config.filter_proto = NULL;
-    config.verbose = false;
-    config.automation_on = false;
+    config.hex_view = true; 
 
-    // 2. Parsing degli Argomenti (Flags)
-    int opt;
-    while ((opt = getopt(argc, argv, "o:f:avh")) != -1) {
-        switch (opt) {
-            case 'o':
-                config.output_file = optarg;
-                break;
-            case 'f':
-                config.filter_proto = optarg;
-                break;
-            case 'a':
-                config.automation_on = true;
-                break;
-            case 'v':
-                config.verbose = true;
-                break;
-            case 'h':
-                show_help();
-                return 0;
-            default:
-                show_help();
-                return 1;
-        }
-    }
+    signal(SIGINT, handle_sigint);
 
-    // 3. Avvio
     print_banner();
-    printf("[*] Output File: %s\n", config.output_file);
-    if (config.filter_proto) {
-        printf("[*] Filter: Only %s\n", config.filter_proto);
-    }
-    if (config.automation_on) {
-        printf("[!] Automation Module: ENABLED\n");
-    }
 
-    printf("\n[INFO] Starting Coke Engine... (Ctrl+C to stop)\n");
-    
-    // TODO: start_sniffer(&config);
-    
-    // Simulazione loop per ora
-    while(1) {
-        sleep(1); 
+    char cmd[256];
+
+    while (1) {
+        if (is_sniffing) {
+            pthread_join(sniffer_thread, NULL);
+        }
+
+        printf("\033[1;36mcoke > \033[0m");
+        
+        if (fgets(cmd, sizeof(cmd), stdin) == NULL) break;
+        cmd[strcspn(cmd, "\n")] = 0;
+
+        if (strcmp(cmd, "exit") == 0) {
+            break;
+        } 
+        else if (strcmp(cmd, "start") == 0) {
+            is_sniffing = 1;
+            if (pthread_create(&sniffer_thread, NULL, sniffer_loop, NULL) != 0) {
+                printf("[ERROR] Thread creation failed\n");
+                is_sniffing = 0;
+            }
+        } 
+        else if (strncmp(cmd, "hex", 3) == 0) {
+            config.hex_view = !config.hex_view;
+            printf("[Config] Hex Dump: %s\n", config.hex_view ? "ON" : "OFF");
+        }
+        else if (strcmp(cmd, "clear") == 0) {
+            print_banner();
+        }
+        else if (strcmp(cmd, "help") == 0) {
+            printf(" Commands:\n");
+            printf("  start   -> Start sniffing (Ctrl+C to stop)\n");
+            printf("  hex     -> Toggle Hex Dump view\n");
+            printf("  clear   -> Clear screen\n");
+            printf("  exit    -> Quit\n");
+        }
+        else if (strlen(cmd) > 0) {
+            printf(" Unknown command: %s\n", cmd);
+        }
     }
 
     return 0;
