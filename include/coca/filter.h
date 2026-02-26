@@ -13,6 +13,10 @@ void filter_set(const char *expr);
 /* Returns true if the packet passes the active filter */
 bool filter_matches(const coca_packet_t *pkt);
 
+/* Set the filter to show only the bidirectional conversation of the given
+ * packet */
+void filter_set_conversation(const coca_packet_t *pkt);
+
 /* Get a human-readable description of the current filter */
 const char *filter_describe(void);
 

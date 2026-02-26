@@ -15,6 +15,7 @@
 static int *s_map = NULL;
 static int s_selected = 0;
 static bool s_follow = true;
+static bool s_show_graph = false;
 
 /* Colours */
 #define C_STATUS 1
@@ -37,14 +38,14 @@ void ui_init(void) {
   if (has_colors()) {
     start_color();
     use_default_colors();
-    init_pair(C_STATUS, COLOR_WHITE, COLOR_BLUE);
-    init_pair(C_TCP, COLOR_GREEN, -1);
-    init_pair(C_UDP, COLOR_CYAN, -1);
-    init_pair(C_ICMP, COLOR_MAGENTA, -1);
-    init_pair(C_ARP, COLOR_YELLOW, -1);
+    init_pair(C_STATUS, COLOR_BLACK, COLOR_CYAN);
+    init_pair(C_TCP, COLOR_CYAN, -1);
+    init_pair(C_UDP, COLOR_BLUE, -1);
+    init_pair(C_ICMP, COLOR_WHITE, -1);
+    init_pair(C_ARP, COLOR_WHITE, -1);
     init_pair(C_OTHER, COLOR_WHITE, -1);
-    init_pair(C_SEL, COLOR_BLACK, COLOR_CYAN);
-    init_pair(C_HEADER, COLOR_BLACK, COLOR_WHITE);
+    init_pair(C_SEL, COLOR_WHITE, COLOR_BLUE);
+    init_pair(C_HEADER, COLOR_CYAN, -1);
   }
 
   s_map = calloc((size_t)g_config.store_capacity, sizeof(int));
@@ -92,7 +93,7 @@ static void draw_hex_dump(const uint8_t *data, int len, int start_y,
         printw(" ");
     }
 
-    printw(" |");
+    printw(" │ ");
     /* ASCII */
     for (int i = 0; i < 16; i++) {
       if (offset + i < len) {
@@ -102,7 +103,7 @@ static void draw_hex_dump(const uint8_t *data, int len, int start_y,
         printw(" ");
       }
     }
-    printw("|");
+    printw(" │");
   }
 }
 
@@ -162,57 +163,112 @@ void ui_run(void) {
     attroff(COLOR_PAIR(C_STATUS) | A_BOLD);
 
     /* Draw Packet List Header */
-    attron(COLOR_PAIR(C_HEADER));
+    attron(COLOR_PAIR(C_HEADER) | A_BOLD);
     mvhline(list_y, 0, ' ', cols);
-    mvprintw(list_y, 0,
-             "   #     | Proto | Source               | Dest                 | "
-             "Len  | Info");
-    attroff(COLOR_PAIR(C_HEADER));
-
-    /* Draw Packet List */
-    int print_start = 0;
-    if (s_selected >= list_lines / 2) {
-      print_start = s_selected - list_lines / 2;
+    if (!s_show_graph) {
+      mvprintw(
+          list_y, 0,
+          "   #     │ Proto │ Source               │ Dest                 │ "
+          "Len  │ Info");
+    } else {
+      mvprintw(list_y, 0, "   Protocol Statistics Graph");
     }
-    if (print_start + list_lines > map_count) {
-      print_start = map_count - list_lines;
-    }
-    if (print_start < 0)
-      print_start = 0;
+    attroff(COLOR_PAIR(C_HEADER) | A_BOLD);
 
-    for (int i = 0; i < list_lines; i++) {
-      int map_idx = print_start + i;
-      if (map_idx >= map_count)
-        break;
+    if (s_show_graph) {
+      unsigned int t = snap.total ? snap.total : 1;
+      int max_w = cols - 30;
+      if (max_w < 10)
+        max_w = 10;
 
-      const coca_packet_t *p = store_get(s_map[map_idx]);
-      if (!p)
-        continue;
+      int tcp_w = (int)((snap.tcp * (long long)max_w) / t);
+      int udp_w = (int)((snap.udp * (long long)max_w) / t);
+      int icmp_w = (int)((snap.icmp * (long long)max_w) / t);
+      int arp_w = (int)((snap.arp * (long long)max_w) / t);
+      int oth_w = (int)((snap.other * (long long)max_w) / t);
 
-      int row_y = list_y + 1 + i;
+      int gy = list_y + 2;
 
-      if (map_idx == s_selected) {
-        attron(COLOR_PAIR(C_SEL) | A_BOLD);
-        mvhline(row_y, 0, ' ', cols);
-      } else {
-        attron(get_color(p->proto));
+      attron(COLOR_PAIR(C_TCP) | A_BOLD);
+      mvprintw(gy++, 2, "TCP   [%5u] │ ", snap.tcp);
+      for (int i = 0; i < tcp_w; i++)
+        printw("█");
+      attroff(COLOR_PAIR(C_TCP) | A_BOLD);
+
+      gy++;
+      attron(COLOR_PAIR(C_UDP) | A_BOLD);
+      mvprintw(gy++, 2, "UDP   [%5u] │ ", snap.udp);
+      for (int i = 0; i < udp_w; i++)
+        printw("█");
+      attroff(COLOR_PAIR(C_UDP) | A_BOLD);
+
+      gy++;
+      attron(COLOR_PAIR(C_ICMP) | A_BOLD);
+      mvprintw(gy++, 2, "ICMP  [%5u] │ ", snap.icmp);
+      for (int i = 0; i < icmp_w; i++)
+        printw("█");
+      attroff(COLOR_PAIR(C_ICMP) | A_BOLD);
+
+      gy++;
+      attron(COLOR_PAIR(C_ARP) | A_BOLD);
+      mvprintw(gy++, 2, "ARP   [%5u] │ ", snap.arp);
+      for (int i = 0; i < arp_w; i++)
+        printw("█");
+      attroff(COLOR_PAIR(C_ARP) | A_BOLD);
+
+      gy++;
+      attron(COLOR_PAIR(C_OTHER) | A_BOLD);
+      mvprintw(gy++, 2, "OTHER [%5u] │ ", snap.other);
+      for (int i = 0; i < oth_w; i++)
+        printw("█");
+      attroff(COLOR_PAIR(C_OTHER) | A_BOLD);
+
+    } else {
+      /* Draw Packet List */
+      int print_start = 0;
+      if (s_selected >= list_lines / 2) {
+        print_start = s_selected - list_lines / 2;
       }
+      if (print_start + list_lines > map_count) {
+        print_start = map_count - list_lines;
+      }
+      if (print_start < 0)
+        print_start = 0;
 
-      mvprintw(row_y, 1, "%-6u | %-5s | %-20s | %-20s | %-4u | %.*s", p->id,
-               proto_label(p->proto), p->src_ip, p->dst_ip, p->raw_len,
-               cols - 65, p->info);
+      for (int i = 0; i < list_lines; i++) {
+        int map_idx = print_start + i;
+        if (map_idx >= map_count)
+          break;
 
-      if (map_idx == s_selected) {
-        attroff(COLOR_PAIR(C_SEL) | A_BOLD);
-      } else {
-        attroff(get_color(p->proto));
+        const coca_packet_t *p = store_get(s_map[map_idx]);
+        if (!p)
+          continue;
+
+        int row_y = list_y + 1 + i;
+
+        if (map_idx == s_selected) {
+          attron(COLOR_PAIR(C_SEL) | A_BOLD);
+          mvhline(row_y, 0, ' ', cols);
+        } else {
+          attron(get_color(p->proto));
+        }
+
+        mvprintw(row_y, 1, "%-6u │ %-5s │ %-20s │ %-20s │ %-4u │ %.*s", p->id,
+                 proto_label(p->proto), p->src_ip, p->dst_ip, p->raw_len,
+                 cols - 65, p->info);
+
+        if (map_idx == s_selected) {
+          attroff(COLOR_PAIR(C_SEL) | A_BOLD);
+        } else {
+          attroff(get_color(p->proto));
+        }
       }
     }
 
     /* Outline & Draw Hex Dump + Details */
     int dtl_y = list_y + 1 + list_lines;
-    attron(COLOR_PAIR(C_HEADER));
-    mvhline(dtl_y, 0, ' ', cols);
+    attron(COLOR_PAIR(C_HEADER) | A_BOLD);
+    mvhline(dtl_y, 0, ACS_HLINE, cols);
     if (map_count == 0) {
       mvprintw(dtl_y, 1, " Detail: [Waiting for packets...]");
     } else {
@@ -229,15 +285,15 @@ void ui_run(void) {
         draw_hex_dump(sp->raw, sp->raw_len, dtl_y + 2, 0, hex_lines);
       }
     }
-    attroff(COLOR_PAIR(C_HEADER));
+    attroff(COLOR_PAIR(C_HEADER) | A_BOLD);
 
     /* Draw Command Bar */
     attron(COLOR_PAIR(C_STATUS) | A_BOLD);
     mvhline(rows - 1, 0, ' ', cols);
-    mvprintw(
-        rows - 1, 1,
-        " [j/k/UP/DOWN] Scroll  [f] Filter  [c] Clear  [h] Help  [q] Quit %s",
-        s_follow ? "(FOLLOWING)" : "");
+    mvprintw(rows - 1, 1,
+             " [j/k/UP/DOWN] Scroll  [f] Filter  [v] Conversation  [g] Graph  "
+             "[c] Clear  [q] Quit %s",
+             s_follow ? "(FOLLOWING)" : "");
     attroff(COLOR_PAIR(C_STATUS) | A_BOLD);
 
     refresh();
@@ -278,13 +334,27 @@ void ui_run(void) {
       /* Help modal ? */
       break;
 
+    case 'v':
+    case 'V':
+      if (map_count > 0 && s_selected >= 0 && s_selected < map_count) {
+        const coca_packet_t *sp = store_get(s_map[s_selected]);
+        if (sp && (sp->proto == PROTO_TCP || sp->proto == PROTO_UDP)) {
+          filter_set_conversation(sp);
+          s_selected = 0;
+          s_follow = true;
+        }
+      }
+      break;
+
     case 'f':
     case 'F':
     case KEY_F(2): {
       /* Input filter modal */
       char filt_str[64] = {0};
       attron(COLOR_PAIR(C_STATUS));
-      mvprintw(rows - 1, 1, " Enter filter (tcp, udp, icmp, arp, ip, all): ");
+      mvprintw(rows - 1, 1,
+               " Enter filter (e.g. proto:tcp src:10.0.0.1 port:80, or clear "
+               "with 'all'): ");
       clrtoeol();
       echo();
       nocbreak();
@@ -297,6 +367,11 @@ void ui_run(void) {
       s_follow = true; /* jump to bottom */
       break;
     }
+
+    case 'g':
+    case 'G':
+      s_show_graph = !s_show_graph;
+      break;
 
     case 'c':
     case 'C':
