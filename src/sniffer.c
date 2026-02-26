@@ -11,12 +11,12 @@
 #include <sys/time.h>
 #include <unistd.h>
 
-#include "coca/config.h"
-#include "coca/dissect.h"
-#include "coca/logger.h"
-#include "coca/packet_store.h"
-#include "coca/sniffer.h"
-#include "coca/stats.h"
+#include "coke/config.h"
+#include "coke/dissect.h"
+#include "coke/logger.h"
+#include "coke/packet_store.h"
+#include "coke/sniffer.h"
+#include "coke/stats.h"
 
 volatile sig_atomic_t g_sniffing = 0;
 static pthread_t s_thread;
@@ -61,7 +61,7 @@ static void *capture_loop(void *arg) {
     if (n == 0)
       continue;
 
-    coca_packet_t pkt;
+    coke_packet_t pkt;
     if (dissect_packet(buf, n, &pkt) == 0) {
       store_push(&pkt);
       stats_record(pkt.proto);

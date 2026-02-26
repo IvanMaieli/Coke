@@ -4,12 +4,12 @@
 #include <stdlib.h>
 #include <unistd.h>
 
-#include "coca/config.h"
-#include "coca/filter.h"
-#include "coca/packet_store.h"
-#include "coca/sniffer.h"
-#include "coca/stats.h"
-#include "coca/ui.h"
+#include "coke/config.h"
+#include "coke/filter.h"
+#include "coke/packet_store.h"
+#include "coke/sniffer.h"
+#include "coke/stats.h"
+#include "coke/ui.h"
 
 void handle_signal(int sig) {
   (void)sig;
@@ -55,7 +55,7 @@ int main(int argc, char *argv[]) {
   sniffer_stop();
   store_destroy();
 
-  printf("\n🧊 Coca shutdown cleanly. Total packets captured: %u\n\n",
+  printf("\n Coke shutdown cleanly. Total packets captured: %u\n\n",
          g_stats.total);
   return EXIT_SUCCESS;
 }

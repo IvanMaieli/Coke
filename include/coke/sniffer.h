@@ -1,5 +1,5 @@
-#ifndef COCA_SNIFFER_H
-#define COCA_SNIFFER_H
+#ifndef COKE_SNIFFER_H
+#define COKE_SNIFFER_H
 
 #include "types.h"
 #include <signal.h>
@@ -13,4 +13,4 @@ int sniffer_start(void);
 /* Signal the capture thread to stop and join it */
 void sniffer_stop(void);
 
-#endif /* COCA_SNIFFER_H */
+#endif /* COKE_SNIFFER_H */

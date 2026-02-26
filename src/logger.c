@@ -1,5 +1,5 @@
 /* ── logger.c — PCAP file writer ─────────────────────────────── */
-#include "coca/logger.h"
+#include "coke/logger.h"
 #include <string.h>
 
 /* ── PCAP file header (libpcap format) ──────────────────────── */
@@ -40,11 +40,11 @@ FILE *logger_open(const char *filename) {
   return f;
 }
 
-void logger_write_packet(FILE *f, const coca_packet_t *pkt) {
+void logger_write_packet(FILE *f, const coke_packet_t *pkt) {
   if (!f || !pkt)
     return;
 
-  uint32_t stored = pkt->raw_len > COCA_MAX_RAW ? COCA_MAX_RAW : pkt->raw_len;
+  uint32_t stored = pkt->raw_len > COKE_MAX_RAW ? COKE_MAX_RAW : pkt->raw_len;
 
   struct pcap_pkt_hdr ph = {.ts_sec = (uint32_t)pkt->ts.tv_sec,
                             .ts_usec = (uint32_t)(pkt->ts.tv_nsec / 1000),

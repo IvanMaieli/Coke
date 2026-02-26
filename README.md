@@ -1,18 +1,23 @@
-# Coca — Minimalist Packet Sniffer Engine
+# Coke - Modern Enterprise Packet Analyzer
 
-Coca is a fast, modular, command-line packet sniffer written in C, featuring an interactive **ncurses** dashboard for real-time packet inspection.
+[![Build](https://img.shields.io/badge/Build-Passing-brightgreen.svg)]()
+[![Platform](https://img.shields.io/badge/Platform-Linux-blue.svg)]()
+[![Language](https://img.shields.io/badge/Language-C-orange.svg)]()
 
-## Features
+Coke is a lightning-fast, highly modular, and visually stunning command-line packet sniffer written in C. It features an interactive **ncurses** dashboard tailored for real-time packet inspection with a sleek "Ice" theme. 
 
-- **Interactive TUI**: Top-top stats bar, scrollable packet list, connection detail view, and bottom hex dump. Wait for packets, then freely examine.
-- **Protocol Dissectors**: Automatically parses Ethernet, IPv4, TCP, UDP, ICMP, and ARP packets with live flag decode and sequence numbering.
-- **Real-Time Filtering**: Press `f` during capture to instantly filter views by `tcp`, `udp`, `icmp`, `arp`, or via basic source/destination IP substrings.
-- **PCAP Export**: Natively writes captured traffic into the standard `libpcap` format (`.pcap`) for later analysis in Wireshark.
-- **Low Overhead**: Captures using raw AF_PACKET sockets directly in the kernel space. Uses an internal fixed-size circular ring buffer.
+## Key Features
+
+- **Gorgeous "Ice" TUI**: A beautiful dashboard styled in Cyan, Blue, and White. Enjoy a top-level stats bar, scrollable packet list, detailed connection view, and an integrated hex dump window.
+- **Advanced Query Engine**: Forget simple substrings. Press `f` to write complex queries using a tokenized key-value syntax. Filter streams instantly: `proto:tcp src:10.0.0.1 dst_port:443 len:>100`.
+- **Conversation Reconstruction**: See an interesting packet? Press `v` to instantly filter the dashboard to that specific 4-tuple bidirectional conversation stream.
+- **Real-Time Protocol Graphs**: Press `g` to flip the packet list into a live ASCII bar chart visualizing the volume of TCP, UDP, ICMP, and ARP traffic taking over your network.
+- **PCAP Native**: Natively writes captured traffic into the standard `libpcap` format (`.pcap`) for Wireshark analysis without breaking a sweat.
+- **Low Overhead Engine**: Captures using raw `AF_PACKET` sockets directly in kernel space, utilizing an internal fixed-size circular ring buffer.
 
 ## Prerequisites
 
-- **Linux** (uses raw sockets and AF_PACKET)
+- **Linux** (Requires raw sockets and `AF_PACKET`)
 - `gcc`, `make`
 - `ncurses` development library (`libncurses-dev` or `ncurses-devel`)
 
@@ -26,30 +31,32 @@ sudo apt-get install build-essential libncurses-dev
 ```bash
 make clean && make
 ```
-*The compiled binary will be placed inside `bin/coca`.*
+*The compiled enterprise binary will be placed inside `bin/coke`.*
 
 ## Usage
 
-You must run Coca as `root` so it can open raw sockets.
+You must run Coke as `root` so it can open raw sockets.
 
 ```bash
-sudo ./bin/coca [OPTIONS]
+sudo ./bin/coke [OPTIONS]
 ```
 
 **Options:**
-- `-f, --filter <proto>`: Initial filter (e.g., `tcp`, `arp`). Default is all.
-- `-o, --output <file.pcap>`: Write raw packets to a `.pcap` file for Wireshark!
-- `-c, --capacity <number>`: Internal ring-buffer capacity (default: 10000)
-- `-h, --help`: Show help
+- `-f, --filter <query>`: Set an initial filter (e.g., `proto:tcp src:192.168`).
+- `-o, --output <file.pcap>`: Write raw packets to a `.pcap` file!
+- `-c, --capacity <number>`: Internal ring-buffer capacity (default: 10000).
+- `-h, --help`: Show help.
 
 ### TUI Commands
 
 While capturing, you can use the keyboard to navigate:
 
-- `j`, `k`, `Up`, `Down`: Scroll packet list.
-- `f`: Open filter prompt. Type `tcp`, `udp`, `icmp`, `arp`, an IP substring, or `all` to clear.
+- `j`, `k`, `Up`, `Down`: Scroll through the packet list.
+- `f`: Open the advanced filter prompt. Enter tokenized queries (e.g. `proto:tcp port:80 src:10.0.0.1`) or type `all` to reset.
+- `v`: **Conversation View**. Highlight a TCP/UDP packet and press `v` to instantly reconstruct the bidirectional stream.
+- `g`: **Graph View**. Toggle the beautiful live protocol statistics bar-chart.
 - `c`: Clear buffer and reset packet statistics.
 - `q`: Quit gracefully. 
 
 ---
-*Stay cold. 🧊*
+*Stay cold.*

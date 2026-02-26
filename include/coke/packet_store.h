@@ -1,5 +1,5 @@
-#ifndef COCA_PACKET_STORE_H
-#define COCA_PACKET_STORE_H
+#ifndef COKE_PACKET_STORE_H
+#define COKE_PACKET_STORE_H
 
 #include "types.h"
 
@@ -7,12 +7,12 @@
 void store_init(int capacity);
 
 /* Push a packet (thread-safe, overwrites oldest) */
-void store_push(const coca_packet_t *pkt);
+void store_push(const coke_packet_t *pkt);
 
 /* Get a packet by index (0 = oldest available).
    Returns a pointer to an internal copy — valid until next push.
    Returns NULL if idx is out of range. */
-const coca_packet_t *store_get(int idx);
+const coke_packet_t *store_get(int idx);
 
 /* Number of packets currently stored */
 int store_count(void);
@@ -26,4 +26,4 @@ void store_clear(void);
 /* Free resources */
 void store_destroy(void);
 
-#endif /* COCA_PACKET_STORE_H */
+#endif /* COKE_PACKET_STORE_H */

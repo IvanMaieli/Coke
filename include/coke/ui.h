@@ -1,5 +1,5 @@
-#ifndef COCA_UI_H
-#define COCA_UI_H
+#ifndef COKE_UI_H
+#define COKE_UI_H
 
 /* Initialise ncurses and colour pairs */
 void ui_init(void);
@@ -10,4 +10,4 @@ void ui_run(void);
 /* Tear down ncurses */
 void ui_cleanup(void);
 
-#endif /* COCA_UI_H */
+#endif /* COKE_UI_H */

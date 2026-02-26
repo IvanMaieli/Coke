@@ -6,7 +6,7 @@ SRC_DIR = src
 OBJ_DIR = obj
 BIN_DIR = bin
 
-TARGET = $(BIN_DIR)/coca
+TARGET = $(BIN_DIR)/coke
 SRCS = $(wildcard $(SRC_DIR)/*.c)
 OBJS = $(patsubst $(SRC_DIR)/%.c, $(OBJ_DIR)/%.o, $(SRCS))
 

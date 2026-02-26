@@ -4,13 +4,13 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "coca/config.h"
-#include "coca/dissect.h"
-#include "coca/filter.h"
-#include "coca/packet_store.h"
-#include "coca/sniffer.h"
-#include "coca/stats.h"
-#include "coca/ui.h"
+#include "coke/config.h"
+#include "coke/dissect.h"
+#include "coke/filter.h"
+#include "coke/packet_store.h"
+#include "coke/sniffer.h"
+#include "coke/stats.h"
+#include "coke/ui.h"
 
 static int *s_map = NULL;
 static int s_selected = 0;
@@ -59,7 +59,7 @@ void ui_cleanup(void) {
   endwin();
 }
 
-static int get_color(coca_proto_t p) {
+static int get_color(coke_proto_t p) {
   switch (p) {
   case PROTO_TCP:
     return COLOR_PAIR(C_TCP);
@@ -93,7 +93,8 @@ static void draw_hex_dump(const uint8_t *data, int len, int start_y,
         printw(" ");
     }
 
-    printw(" │ ");
+    addch(ACS_VLINE);
+    printw(" ");
     /* ASCII */
     for (int i = 0; i < 16; i++) {
       if (offset + i < len) {
@@ -103,7 +104,8 @@ static void draw_hex_dump(const uint8_t *data, int len, int start_y,
         printw(" ");
       }
     }
-    printw(" │");
+    printw(" ");
+    addch(ACS_VLINE);
   }
 }
 
@@ -116,7 +118,7 @@ void ui_run(void) {
     int total_store = store_count();
     int map_count = 0;
     for (int i = 0; i < total_store; i++) {
-      const coca_packet_t *p = store_get(i);
+      const coke_packet_t *p = store_get(i);
       if (p && filter_matches(p)) {
         s_map[map_count++] = i;
       }
@@ -145,9 +147,9 @@ void ui_run(void) {
     /* Draw Status Bar */
     attron(COLOR_PAIR(C_STATUS) | A_BOLD);
     mvhline(0, 0, ' ', cols);
-    mvprintw(0, 1, " 🧊 COCA v2.0 | Filter: %s", filter_describe());
+    mvprintw(0, 1, "  COKE v2.0 | Filter: %s", filter_describe());
 
-    coca_stats_t snap;
+    coke_stats_t snap;
     snap.total = atomic_load(&g_stats.total);
     snap.tcp = atomic_load(&g_stats.tcp);
     snap.udp = atomic_load(&g_stats.udp);
@@ -166,10 +168,17 @@ void ui_run(void) {
     attron(COLOR_PAIR(C_HEADER) | A_BOLD);
     mvhline(list_y, 0, ' ', cols);
     if (!s_show_graph) {
-      mvprintw(
-          list_y, 0,
-          "   #     │ Proto │ Source               │ Dest                 │ "
-          "Len  │ Info");
+      mvprintw(list_y, 0, "   #     ");
+      addch(ACS_VLINE);
+      printw(" Proto ");
+      addch(ACS_VLINE);
+      printw(" Source               ");
+      addch(ACS_VLINE);
+      printw(" Dest                 ");
+      addch(ACS_VLINE);
+      printw(" Len  ");
+      addch(ACS_VLINE);
+      printw(" Info");
     } else {
       mvprintw(list_y, 0, "   Protocol Statistics Graph");
     }
@@ -190,38 +199,53 @@ void ui_run(void) {
       int gy = list_y + 2;
 
       attron(COLOR_PAIR(C_TCP) | A_BOLD);
-      mvprintw(gy++, 2, "TCP   [%5u] │ ", snap.tcp);
+      mvprintw(gy, 2, "TCP   [%5u] ", snap.tcp);
+      addch(ACS_VLINE);
+      printw(" ");
       for (int i = 0; i < tcp_w; i++)
-        printw("█");
+        addch(ACS_CKBOARD);
       attroff(COLOR_PAIR(C_TCP) | A_BOLD);
+      gy++;
 
       gy++;
       attron(COLOR_PAIR(C_UDP) | A_BOLD);
-      mvprintw(gy++, 2, "UDP   [%5u] │ ", snap.udp);
+      mvprintw(gy, 2, "UDP   [%5u] ", snap.udp);
+      addch(ACS_VLINE);
+      printw(" ");
       for (int i = 0; i < udp_w; i++)
-        printw("█");
+        addch(ACS_CKBOARD);
       attroff(COLOR_PAIR(C_UDP) | A_BOLD);
+      gy++;
 
       gy++;
       attron(COLOR_PAIR(C_ICMP) | A_BOLD);
-      mvprintw(gy++, 2, "ICMP  [%5u] │ ", snap.icmp);
+      mvprintw(gy, 2, "ICMP  [%5u] ", snap.icmp);
+      addch(ACS_VLINE);
+      printw(" ");
       for (int i = 0; i < icmp_w; i++)
-        printw("█");
+        addch(ACS_CKBOARD);
       attroff(COLOR_PAIR(C_ICMP) | A_BOLD);
+      gy++;
 
       gy++;
       attron(COLOR_PAIR(C_ARP) | A_BOLD);
-      mvprintw(gy++, 2, "ARP   [%5u] │ ", snap.arp);
+      mvprintw(gy, 2, "ARP   [%5u] ", snap.arp);
+      addch(ACS_VLINE);
+      printw(" ");
       for (int i = 0; i < arp_w; i++)
-        printw("█");
+        addch(ACS_CKBOARD);
       attroff(COLOR_PAIR(C_ARP) | A_BOLD);
+      gy++;
 
       gy++;
       attron(COLOR_PAIR(C_OTHER) | A_BOLD);
-      mvprintw(gy++, 2, "OTHER [%5u] │ ", snap.other);
+      mvprintw(gy, 2, "OTHER [%5u] ", snap.other);
+      addch(ACS_VLINE);
+      printw(" ");
       for (int i = 0; i < oth_w; i++)
-        printw("█");
+        addch(ACS_CKBOARD);
       attroff(COLOR_PAIR(C_OTHER) | A_BOLD);
+      gy++;
 
     } else {
       /* Draw Packet List */
@@ -240,7 +264,7 @@ void ui_run(void) {
         if (map_idx >= map_count)
           break;
 
-        const coca_packet_t *p = store_get(s_map[map_idx]);
+        const coke_packet_t *p = store_get(s_map[map_idx]);
         if (!p)
           continue;
 
@@ -253,9 +277,17 @@ void ui_run(void) {
           attron(get_color(p->proto));
         }
 
-        mvprintw(row_y, 1, "%-6u │ %-5s │ %-20s │ %-20s │ %-4u │ %.*s", p->id,
-                 proto_label(p->proto), p->src_ip, p->dst_ip, p->raw_len,
-                 cols - 65, p->info);
+        mvprintw(row_y, 1, "%-6u ", p->id);
+        addch(ACS_VLINE);
+        printw(" %-5s ", proto_label(p->proto));
+        addch(ACS_VLINE);
+        printw(" %-20s ", p->src_ip);
+        addch(ACS_VLINE);
+        printw(" %-20s ", p->dst_ip);
+        addch(ACS_VLINE);
+        printw(" %-4u ", p->raw_len);
+        addch(ACS_VLINE);
+        printw(" %.*s", cols - 65, p->info);
 
         if (map_idx == s_selected) {
           attroff(COLOR_PAIR(C_SEL) | A_BOLD);
@@ -272,7 +304,7 @@ void ui_run(void) {
     if (map_count == 0) {
       mvprintw(dtl_y, 1, " Detail: [Waiting for packets...]");
     } else {
-      const coca_packet_t *sp = store_get(s_map[s_selected]);
+      const coke_packet_t *sp = store_get(s_map[s_selected]);
       if (sp) {
         mvprintw(dtl_y, 1, " Detail: %s  %s:%u -> %s:%u  [%d bytes]",
                  proto_label(sp->proto), sp->src_ip, sp->src_port, sp->dst_ip,
@@ -337,7 +369,7 @@ void ui_run(void) {
     case 'v':
     case 'V':
       if (map_count > 0 && s_selected >= 0 && s_selected < map_count) {
-        const coca_packet_t *sp = store_get(s_map[s_selected]);
+        const coke_packet_t *sp = store_get(s_map[s_selected]);
         if (sp && (sp->proto == PROTO_TCP || sp->proto == PROTO_UDP)) {
           filter_set_conversation(sp);
           s_selected = 0;

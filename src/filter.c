@@ -1,17 +1,17 @@
 /* ── filter.c — Runtime packet filtering ─────────────────────── */
-#include "coca/filter.h"
+#include "coke/filter.h"
 #include <stdio.h>
 #include <string.h>
 #include <strings.h>
 
-#include "coca/filter.h"
+#include "coke/filter.h"
 #include <ctype.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <strings.h>
 
-static coca_filter_t g_filter;
+static coke_filter_t g_filter;
 static char g_desc[256];
 
 void filter_init(void) {
@@ -27,7 +27,7 @@ void filter_init(void) {
   snprintf(g_desc, sizeof(g_desc), "All Traffic");
 }
 
-void filter_set_conversation(const coca_packet_t *pkt) {
+void filter_set_conversation(const coke_packet_t *pkt) {
   filter_init();
   g_filter.is_conv = true;
   g_filter.proto = pkt->proto;
@@ -109,7 +109,7 @@ void filter_set(const char *expr) {
   }
 }
 
-bool filter_matches(const coca_packet_t *pkt) {
+bool filter_matches(const coke_packet_t *pkt) {
   if (g_filter.is_conv) {
     if (pkt->proto != g_filter.proto)
       return false;

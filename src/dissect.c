@@ -1,6 +1,6 @@
 
 /* ── dissect.c — Protocol dissection ─────────────────────────── */
-#include "coca/dissect.h"
+#include "coke/dissect.h"
 #include <arpa/inet.h>
 #include <linux/if_arp.h>
 #include <net/ethernet.h>
@@ -11,7 +11,7 @@
 #include <stdio.h>
 #include <string.h>
 
-const char *proto_label(coca_proto_t p) {
+const char *proto_label(coke_proto_t p) {
   switch (p) {
   case PROTO_TCP:
     return "TCP";
@@ -28,11 +28,11 @@ const char *proto_label(coca_proto_t p) {
   }
 }
 
-int dissect_packet(const uint8_t *raw, int raw_len, coca_packet_t *out) {
+int dissect_packet(const uint8_t *raw, int raw_len, coke_packet_t *out) {
   memset(out, 0, sizeof(*out));
   clock_gettime(CLOCK_REALTIME, &out->ts);
 
-  int copy_len = raw_len > COCA_MAX_RAW ? COCA_MAX_RAW : raw_len;
+  int copy_len = raw_len > COKE_MAX_RAW ? COKE_MAX_RAW : raw_len;
   memcpy(out->raw, raw, (size_t)copy_len);
   out->raw_len = (uint16_t)raw_len;
 
@@ -56,7 +56,7 @@ int dissect_packet(const uint8_t *raw, int raw_len, coca_packet_t *out) {
       uint16_t op;
       memcpy(&op, arp + 6, 2);
       op = ntohs(op);
-      snprintf(out->info, COCA_INFO_LEN,
+      snprintf(out->info, COKE_INFO_LEN,
                op == 1 ? "Who has %s? Tell %s" : "Reply: %s is at ...",
                out->dst_ip, out->src_ip);
     }
@@ -66,7 +66,7 @@ int dissect_packet(const uint8_t *raw, int raw_len, coca_packet_t *out) {
   /* ── IPv4 ───────────────────────────────────────────────── */
   if (eth_type != ETH_P_IP) {
     out->proto = PROTO_OTHER;
-    snprintf(out->info, COCA_INFO_LEN, "EtherType 0x%04X", eth_type);
+    snprintf(out->info, COKE_INFO_LEN, "EtherType 0x%04X", eth_type);
     return 0;
   }
 
@@ -106,7 +106,7 @@ int dissect_packet(const uint8_t *raw, int raw_len, coca_packet_t *out) {
         strcat(flags, "PSH ");
       if (tcp->urg)
         strcat(flags, "URG ");
-      snprintf(out->info, COCA_INFO_LEN, "%u -> %u  [%s] Seq=%u Win=%u",
+      snprintf(out->info, COKE_INFO_LEN, "%u -> %u  [%s] Seq=%u Win=%u",
                out->src_port, out->dst_port, flags, ntohl(tcp->seq),
                ntohs(tcp->window));
     }
@@ -120,7 +120,7 @@ int dissect_packet(const uint8_t *raw, int raw_len, coca_packet_t *out) {
           (struct udphdr *)(raw + sizeof(struct ethhdr) + ip_hdr_len);
       out->src_port = ntohs(udp->source);
       out->dst_port = ntohs(udp->dest);
-      snprintf(out->info, COCA_INFO_LEN, "%u -> %u  Len=%u", out->src_port,
+      snprintf(out->info, COKE_INFO_LEN, "%u -> %u  Len=%u", out->src_port,
                out->dst_port, ntohs(udp->len));
     }
     break;
@@ -139,7 +139,7 @@ int dissect_packet(const uint8_t *raw, int raw_len, coca_packet_t *out) {
         type_str = "Dest Unreachable";
       else if (icmp->type == ICMP_TIME_EXCEEDED)
         type_str = "Time Exceeded";
-      snprintf(out->info, COCA_INFO_LEN, "%s  Code=%u  Id=%u  Seq=%u", type_str,
+      snprintf(out->info, COKE_INFO_LEN, "%s  Code=%u  Id=%u  Seq=%u", type_str,
                icmp->code, ntohs(icmp->un.echo.id),
                ntohs(icmp->un.echo.sequence));
     }
@@ -147,7 +147,7 @@ int dissect_packet(const uint8_t *raw, int raw_len, coca_packet_t *out) {
   }
   default:
     out->proto = PROTO_OTHER;
-    snprintf(out->info, COCA_INFO_LEN, "IP Proto %u", iph->protocol);
+    snprintf(out->info, COKE_INFO_LEN, "IP Proto %u", iph->protocol);
     break;
   }
 

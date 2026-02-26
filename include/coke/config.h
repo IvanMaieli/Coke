@@ -1,10 +1,10 @@
-#ifndef COCA_CONFIG_H
-#define COCA_CONFIG_H
+#ifndef COKE_CONFIG_H
+#define COKE_CONFIG_H
 
 #include "types.h"
 
 /* Global configuration – initialised in config_init() */
-extern coca_config_t g_config;
+extern coke_config_t g_config;
 
 /* Set defaults */
 void config_init(void);
@@ -15,4 +15,4 @@ int config_parse_args(int argc, char *argv[]);
 /* Print usage to stdout */
 void config_usage(const char *progname);
 
-#endif /* COCA_CONFIG_H */
+#endif /* COKE_CONFIG_H */

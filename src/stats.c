@@ -1,7 +1,7 @@
 /* ── stats.c — Atomic traffic counters ───────────────────────── */
-#include "coca/stats.h"
+#include "coke/stats.h"
 
-coca_stats_t g_stats;
+coke_stats_t g_stats;
 
 void stats_reset(void) {
   atomic_store(&g_stats.total, 0);
@@ -12,7 +12,7 @@ void stats_reset(void) {
   atomic_store(&g_stats.other, 0);
 }
 
-void stats_record(coca_proto_t proto) {
+void stats_record(coke_proto_t proto) {
   atomic_fetch_add(&g_stats.total, 1);
   switch (proto) {
   case PROTO_TCP:

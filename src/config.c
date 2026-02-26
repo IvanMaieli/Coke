@@ -1,11 +1,11 @@
 /* ── config.c — CLI argument parsing & defaults ──────────────── */
-#include "coca/config.h"
+#include "coke/config.h"
 #include <getopt.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
-coca_config_t g_config;
+coke_config_t g_config;
 
 void config_init(void) {
   g_config.interface = NULL;
